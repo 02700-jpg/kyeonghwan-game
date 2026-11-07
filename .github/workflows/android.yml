@@ -11,14 +11,15 @@ jobs:
     container:
       image: barichello/godot-ci:4.3
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Install Java and export templates
+      - name: Install Android SDK components and signing key
         run: |
           apt-get update
           apt-get install -y openjdk-17-jdk wget unzip
           export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+          yes | sdkmanager --licenses || true
+          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
           mkdir -p "$HOME/.local/share/godot/export_templates/4.3.stable"
           wget -q https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_export_templates.tpz -O /tmp/templates.tpz
           unzip -q /tmp/templates.tpz -d /tmp/godot-templates
@@ -26,17 +27,18 @@ jobs:
           mkdir -p "$HOME/.android"
           keytool -genkeypair -v -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
 
-      - name: Export debug APK
+      - name: Export APK
         env:
           JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
+          ANDROID_HOME: /usr/lib/android-sdk
+          ANDROID_SDK_ROOT: /usr/lib/android-sdk
         run: |
-          export PATH="$JAVA_HOME/bin:$PATH"
+          export PATH="$JAVA_HOME/bin:$ANDROID_HOME/cmdline-tools/cmdline-tools/bin:$PATH"
           mkdir -p build
           godot --headless --path . --editor --quit
           godot --headless --path . --export-debug "Android" build/kyeonghwan-game.apk
 
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: kyeonghwan-game-apk
           path: build/kyeonghwan-game.apk
