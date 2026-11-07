@@ -12,6 +12,7 @@ jobs:
       image: barichello/godot-ci:4.3
     steps:
       - uses: actions/checkout@v4
+
       - name: Install Android SDK and Godot export templates
         run: |
           apt-get update
@@ -28,10 +29,12 @@ jobs:
           [gd_resource type="EditorSettings" format=3]
           [resource]
           export/android/android_sdk_path = "/usr/lib/android-sdk"
+          export/android/java_sdk_path = "/usr/lib/jvm/java-17-openjdk-amd64"
           export/android/debug_keystore = "$HOME/.android/debug.keystore"
           export/android/debug_keystore_user = "androiddebugkey"
           export/android/debug_keystore_pass = "android"
           EOF
+
       - name: Export debug APK
         env:
           JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
@@ -42,6 +45,7 @@ jobs:
           mkdir -p build
           godot --headless --path . --editor --quit
           godot --headless --path . --export-debug "Android" build/kyeonghwan-game.apk --verbose
+
       - uses: actions/upload-artifact@v4
         with:
           name: kyeonghwan-game-apk
